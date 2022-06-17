@@ -10,3 +10,31 @@
 // R0 >= 0, R1 >= 0, and R0*R1 < 32768.
 
 // Put your code here.
+
+  @i
+  M=1
+  @prod
+  M=0
+(LOOP)
+  @i
+  D=M
+  @R0
+  D=M-D
+  @END
+  D;JLT
+  // Add to product
+  @R1
+  D=M
+  @prod
+  M=D+M
+  // Increment i
+  @i
+  M=M+1
+  // Jump back
+  @LOOP
+  0;JMP
+(END)
+  @prod
+  D=M
+  @R2
+  M=D
