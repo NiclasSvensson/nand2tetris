@@ -3,3 +3,4 @@
 *.cmp
 
 tools/
+projects/05/*.hack
