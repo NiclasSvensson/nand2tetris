@@ -1,6 +1,12 @@
 *.tst
 *.out
 *.cmp
+*.hack
 
 tools/
-projects/05/*.hack
+__pycache__/
+
+projects/06/add/*.asm
+projects/06/max/*.asm
+projects/06/rect/*.asm
+projects/06/pong/*.asm
