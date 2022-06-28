@@ -88,16 +88,16 @@ class CodeWriter:
                 self.asm_file.write("@SP\n")
                 self.asm_file.write("A=M\n")
                 self.asm_file.write("M=D\n")
-                self.asm_file.write("@SP\n")
-                self.asm_file.write("M=M+1\n")
+                #self.asm_file.write("@SP\n")
+                #self.asm_file.write("M=M+1\n")
             elif segment == "static":
                 self.asm_file.write("@" + self.file_name + "." + str(index) + "\n")
                 self.asm_file.write("D=M\n")
                 self.asm_file.write("@SP\n")
                 self.asm_file.write("A=M\n")
                 self.asm_file.write("M=D\n")
-                self.asm_file.write("@SP\n")
-                self.asm_file.write("M=M+1\n")
+                #self.asm_file.write("@SP\n")
+                #self.asm_file.write("M=M+1\n")
             else:
                 self.asm_file.write("@" + str(index) + "\n")
                 self.asm_file.write("D=A\n")
@@ -111,32 +111,5 @@ class CodeWriter:
                 self.asm_file.write("@SP\n")
                 self.asm_file.write("A=M\n")
                 self.asm_file.write("M=D\n")
-                self.asm_file.write("@SP\n")
-                self.asm_file.write("M=M+1\n")
-
-
-"""
-self.asm_file.write("@SP\n")
-self.asm_file.write("M=M-1\n")
-self.asm_file.write("A=M\n")
-self.asm_file.write("D=M\n")
-self.asm_file.write("@SP\n")
-self.asm_file.write("M=M-1\n")
-self.asm_file.write("A=M\n")
-self.asm_file.write("D=D+M\n")
-self.asm_file.write("@SP\n")
-self.asm_file.write("A=M\n")
-self.asm_file.write("M=D\n")
-self.asm_file.write("@SP\n")
-self.asm_file.write("M=M+1\n")
-"""
-
-"""
-self.asm_file.write("@" + str(index) + "\n")
-self.asm_file.write("D=A\n")
-self.asm_file.write("@SP\n")
-self.asm_file.write("A=M\n")
-self.asm_file.write("M=D\n")
-self.asm_file.write("@SP\n")
-self.asm_file.write("M=M+1\n")
-"""
+            self.asm_file.write("@SP\n")
+            self.asm_file.write("M=M+1\n")
