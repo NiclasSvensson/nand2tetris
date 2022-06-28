@@ -2,6 +2,7 @@
 *.out
 *.cmp
 *.hack
+*.vm
 
 tools/
 __pycache__/
@@ -10,3 +11,6 @@ projects/06/add/*.asm
 projects/06/max/*.asm
 projects/06/rect/*.asm
 projects/06/pong/*.asm
+
+projects/07/StackArithmetic
+projects/07/MemoryAccess
