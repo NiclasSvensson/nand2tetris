@@ -3,6 +3,7 @@
 *.cmp
 *.hack
 *.vm
+*.pdf
 
 tools/
 __pycache__/
