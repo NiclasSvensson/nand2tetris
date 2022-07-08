@@ -1,17 +1,22 @@
 import os
 
 class CodeWriter:
-    def __init__(self, output):
-        self.asm_file = open(output.replace("vm", "asm"), "w")
+    def __init__(self, output_dir):
+        path = output_dir[:-1] if os.path.isdir(output_dir) else os.path.dirname(output_dir)
+        self.asm_file = open(os.path.join(path, os.path.basename(path) + ".asm"), "w")
         self.memory_segments = {"local": "LCL", "argument": "ARG", "this": "THIS", "that": "THAT", "pointer": "3", "temp": "5"}
-        self.label_counter = 0
         self.number_of_comp = 0
+        self.number_of_call = 0
 
     def setFileName(self, file_name):
         self.file_name = str(file_name)
 
     def writeInit(self):
-        pass
+        self.asm_file.write("@256\n")
+        self.asm_file.write("D=A\n")
+        self.asm_file.write("@SP\n")
+        self.asm_file.write("M=D\n")
+        self.writeCall("Sys.init", 0)
 
     def writeArithmetic(self, command):
         self.asm_file.write("@SP\n")
@@ -124,3 +129,74 @@ class CodeWriter:
         self.asm_file.write("D=M\n")
         self.asm_file.write("@" + label + "\n")
         self.asm_file.write("D;JNE\n")
+
+    def writeCall(self, function_name, num_args):
+        label = "RETURN_" + str(self.number_of_call)
+        self.asm_file.write("@" + label + "\n")
+        self.asm_file.write("D=A\n")
+        self.asm_file.write("@SP\n")
+        self.asm_file.write("A=M\n")
+        self.asm_file.write("M=D\n")
+        self.asm_file.write("@SP\n")
+        self.asm_file.write("M=M+1\n")
+
+        for seg in ["LCL", "ARG", "THIS", "THAT"]:
+            self.asm_file.write("@" + seg + "\n")
+            self.asm_file.write("D=M\n")
+            self.asm_file.write("@SP\n")
+            self.asm_file.write("A=M\n")
+            self.asm_file.write("M=D\n")
+            self.asm_file.write("@SP\n")
+            self.asm_file.write("M=M+1\n")
+
+        self.asm_file.write("@SP\n")
+        self.asm_file.write("D=M\n")
+        self.asm_file.write("@5\n")
+        self.asm_file.write("D=D-A\n")
+        self.asm_file.write("@" + str(num_args) + "\n")
+        self.asm_file.write("D=D-A\n")
+        self.asm_file.write("@ARG\n")
+        self.asm_file.write("M=D\n")
+        self.asm_file.write("@SP\n")
+        self.asm_file.write("D=M\n")
+        self.asm_file.write("@LCL\n")
+        self.asm_file.write("M=D\n")
+        self.writeGoto(function_name)
+        self.asm_file.write("(" + label + ")\n")
+
+        self.number_of_call += 1
+
+    def writeReturn(self):
+        self.asm_file.write("@LCL\n")
+        self.asm_file.write("D=M\n")
+        self.asm_file.write("@FRAME\n") #FRAME
+        self.asm_file.write("M=D\n")
+        self.asm_file.write("@5\n")
+        self.asm_file.write("A=D-A\n")
+        self.asm_file.write("D=M\n")
+        self.asm_file.write("@RET\n") #RET
+        self.asm_file.write("M=D\n")
+
+        self.writePushPop("C_POP", "argument", 0)
+
+        self.asm_file.write("@ARG\n")
+        self.asm_file.write("D=M\n")
+        self.asm_file.write("@SP\n")
+        self.asm_file.write("M=D+1\n")
+
+        for seg in ["THAT", "THIS", "ARG", "LCL"]:
+            self.asm_file.write("@FRAME\n")
+            self.asm_file.write("M=M-1\n")
+            self.asm_file.write("A=M\n")
+            self.asm_file.write("D=M\n")
+            self.asm_file.write("@" + seg + "\n")
+            self.asm_file.write("M=D\n")
+
+        self.asm_file.write("@RET\n")
+        self.asm_file.write("A=M\n")
+        self.asm_file.write("0;JMP\n")
+
+    def writeFunction(self, function_name, num_locals):
+        self.asm_file.write("(" + function_name + ")\n")
+        for local in range(num_locals):
+            self.writePushPop("C_PUSH", "constant", 0)
