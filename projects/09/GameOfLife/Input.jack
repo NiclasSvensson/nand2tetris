@@ -1,0 +1,57 @@
+class Input {
+  field boolean exit, run, ret;
+  field int xPos, yPos;
+  field char latest;
+
+  constructor Input new() {
+    let exit = false; let run = false; let ret = false;
+    let xPos = 0; let yPos = 0;
+    let latest = 140;
+    return this;
+  }
+
+  method boolean getExit() {
+    return exit;
+  }
+
+  method boolean getRet() {
+    return ret;
+  }
+
+  method int getXPos() {
+    return xPos;
+  }
+
+  method int getYPos() {
+    return yPos;
+  }
+
+  method void update(){
+    var char c;
+    let ret = false;
+    let c = Keyboard.keyPressed();
+    if (c = latest) {
+      return;
+    }
+    let latest = c;
+    if (c = 32) {
+      let ret = true;
+    }
+    if (c = 140) {
+      let exit = true;
+    }
+    if (c = 130) {
+      if (xPos > 0){ let xPos = xPos - 1; }
+    }
+    if (c = 131) {
+      if (yPos > 0){ let yPos = yPos - 1; }
+    }
+    if (c = 132) {
+      if (xPos < 62){ let xPos = xPos + 1; }
+    }
+    if (c = 133) {
+      if (yPos < 30){ let yPos = yPos + 1; }
+    }
+    return;
+  }
+}

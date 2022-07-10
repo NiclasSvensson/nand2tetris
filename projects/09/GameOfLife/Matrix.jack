@@ -1,0 +1,50 @@
+class Matrix {
+  field int width, height, length, blk_sz;
+  field Array m;
+
+  constructor Matrix new(int x, int y, int sz) {
+    var int i;
+    let i = 0;
+    let length = x*y; let width = x; let height = y; let blk_sz = sz;
+    let m = Array.new(length);
+    while (i < length) {
+      let m[i] = false;
+      let i = i + 1;
+    }
+    return this;
+  }
+
+  method void toggle(int x, int y){
+    let m[y*width + x] = ~m[y*width + x];
+    return;
+  }
+
+  method boolean get(int x, int y){
+    return m[y*width + x];
+  }
+
+  method void draw(int xPos, int yPos){
+    var int x, y;
+    var boolean occupied;
+    let y = 0;
+    while (y < height) {
+      let x = 0;
+      while (x < width) {
+        let occupied = m[y*width + x];
+        if (occupied){
+          do Screen.setColor(true);
+        } else {
+          do Screen.setColor(false);
+        }
+        do Screen.drawRectangle(x*blk_sz, y*blk_sz, x*blk_sz+blk_sz-1, y*blk_sz+blk_sz-1);
+        if (x = xPos & y = yPos){
+          do Screen.setColor(true);
+          do Screen.drawCircle(xPos*blk_sz + (blk_sz/2), yPos*blk_sz + (blk_sz/2), 2);
+        }
+        let x = x + 1;
+      }
+      let y = y + 1;
+    }
+    return;
+  }
+}
