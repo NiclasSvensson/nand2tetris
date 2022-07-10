@@ -1,17 +1,23 @@
 class Main {
   function void main() {
-    var int blk_sz, xPos, yPos;
+    var int xPos, yPos, width, height, blk_sz;
     var Matrix m;
     var Input inputHandler;
+    var Menu menu;
     var boolean exit, ret;
-    let blk_sz = 8;
-    let m = Matrix.new(64, 32, blk_sz);
-    let inputHandler = Input.new();
+    
+    let width = 64; let height = 28; let blk_sz = 8;
+    let m = Matrix.new(width, height, blk_sz);
+    let inputHandler = Input.new(width, height);
+    let menu = Menu.new(height, blk_sz);
     let exit = false; let ret = false;
+
+    do menu.draw();
     while (~exit) {
       let xPos = inputHandler.getXPos();
       let yPos = inputHandler.getYPos();
       do m.draw(xPos, yPos);
+      //do menu.draw();
       do inputHandler.update();
       let ret = inputHandler.getRet();
       if (ret) {

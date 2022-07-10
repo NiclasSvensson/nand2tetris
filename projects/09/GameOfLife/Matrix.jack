@@ -30,7 +30,7 @@ class Matrix {
     while (y < height) {
       let x = 0;
       while (x < width) {
-        let occupied = m[y*width + x];
+        let occupied = get(x, y); // m[y*width + x];
         if (occupied){
           do Screen.setColor(true);
         } else {
@@ -38,7 +38,11 @@ class Matrix {
         }
         do Screen.drawRectangle(x*blk_sz, y*blk_sz, x*blk_sz+blk_sz-1, y*blk_sz+blk_sz-1);
         if (x = xPos & y = yPos){
-          do Screen.setColor(true);
+          if (occupied) {
+            do Screen.setColor(false);
+          } else{
+            do Screen.setColor(true);
+          }
           do Screen.drawCircle(xPos*blk_sz + (blk_sz/2), yPos*blk_sz + (blk_sz/2), 2);
         }
         let x = x + 1;

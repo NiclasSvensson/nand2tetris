@@ -1,11 +1,13 @@
 class Input {
   field boolean exit, run, ret;
-  field int xPos, yPos;
+  field int xPos, yPos, width, height;
   field char latest;
 
-  constructor Input new() {
+  constructor Input new(int w, int h) {
     let exit = false; let run = false; let ret = false;
-    let xPos = 0; let yPos = 0;
+    //let xPos = 32; let yPos = 15;
+    let width = w; let height = h;
+    let xPos = Math.divide(w, 2); let yPos = Math.divide(h, 2);
     let latest = 140;
     return this;
   }
@@ -47,10 +49,10 @@ class Input {
       if (yPos > 0){ let yPos = yPos - 1; }
     }
     if (c = 132) {
-      if (xPos < 62){ let xPos = xPos + 1; }
+      if (xPos < (width - 1)){ let xPos = xPos + 1; }
     }
     if (c = 133) {
-      if (yPos < 30){ let yPos = yPos + 1; }
+      if (yPos < (height - 1)){ let yPos = yPos + 1; }
     }
     return;
   }

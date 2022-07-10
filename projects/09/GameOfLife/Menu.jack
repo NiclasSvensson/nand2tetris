@@ -1,0 +1,22 @@
+class Menu {
+  field int startHeight, blk_sz;
+
+  constructor Menu new(int h, int sz){
+    let startHeight = h; let blk_sz = sz;
+    return this;
+  }
+
+  method void draw(){
+    do Screen.setColor(true);
+    do Screen.drawLine(0, startHeight*blk_sz, 511, startHeight*blk_sz);
+    do Output.moveCursor(21, 0);
+    do Output.printString("Use arrow keys to move cursor");
+    do Output.moveCursor(22, 0);
+    do Output.printString("Press SPACE to toggle cell");
+    do Output.moveCursor(21, 38);
+    do Output.printString("Press Enter to start/stop");
+    do Output.moveCursor(22, 38);
+    do Output.printString("Press ESC to Quit");
+    return;
+  }
+}
