@@ -1,29 +1,38 @@
 class Main {
   function void main() {
+    // Declaring variables
     var int xPos, yPos, width, height, blk_sz;
+    var boolean exit, run, ret;
     var Matrix m;
     var Input inputHandler;
     var Menu menu;
-    var boolean exit, ret;
-    
+
+    // Setting variables
     let width = 64; let height = 28; let blk_sz = 8;
+    let exit = false; let run = false; let ret = false;
     let m = Matrix.new(width, height, blk_sz);
     let inputHandler = Input.new(width, height);
     let menu = Menu.new(height, blk_sz);
-    let exit = false; let ret = false;
 
+    // Game loop
     do menu.draw();
     while (~exit) {
+      // Update inputs
       let xPos = inputHandler.getXPos();
       let yPos = inputHandler.getYPos();
-      do m.draw(xPos, yPos);
-      //do menu.draw();
-      do inputHandler.update();
+      let exit = inputHandler.getExit();
+      let run = inputHandler.getRun();
       let ret = inputHandler.getRet();
+      // Do stuff
+      do m.draw(xPos, yPos);
+      if (run) {
+        do Sys.wait(300);
+        do m.update();
+      }
+      do inputHandler.update();
       if (ret) {
         do m.toggle(xPos, yPos);
       }
-      let exit = inputHandler.getExit();
     }
     return;
    }

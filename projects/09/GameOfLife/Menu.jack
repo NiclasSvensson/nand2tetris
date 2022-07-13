@@ -13,9 +13,9 @@ class Menu {
     do Output.printString("Use arrow keys to move cursor");
     do Output.moveCursor(22, 0);
     do Output.printString("Press SPACE to toggle cell");
-    do Output.moveCursor(21, 38);
-    do Output.printString("Press Enter to start/stop");
-    do Output.moveCursor(22, 38);
+    do Output.moveCursor(21, 40);
+    do Output.printString("Press 'S' to start/stop");
+    do Output.moveCursor(22, 40);
     do Output.printString("Press ESC to Quit");
     return;
   }

@@ -1,17 +1,26 @@
 class Matrix {
   field int width, height, length, blk_sz;
-  field Array m;
+  field Array m, n, temp;
 
   constructor Matrix new(int x, int y, int sz) {
     var int i;
     let i = 0;
     let length = x*y; let width = x; let height = y; let blk_sz = sz;
     let m = Array.new(length);
+    let n = Array.new(length);
     while (i < length) {
       let m[i] = false;
+      let n[i] = false;
       let i = i + 1;
     }
     return this;
+  }
+
+  method void toggleMatrix(){
+    let temp = n;
+    let n = m;
+    let m = temp;
+    return;
   }
 
   method void toggle(int x, int y){
@@ -19,8 +28,70 @@ class Matrix {
     return;
   }
 
+  method void set(int x, int y, boolean value){
+    let m[y*width + x] = value;
+    return;
+  }
+
   method boolean get(int x, int y){
     return m[y*width + x];
+  }
+
+  method void update(){
+    var int x, y, neighbours;
+    var boolean occ;
+    let y = 0;
+    while (y < height){
+      let x = 0;
+      while (x < width){
+        let neighbours = getNeighbours(x, y);
+        let occ = get(x, y);
+        if (occ){
+          if (neighbours < 2) {
+            let n[y*width + x] = false;
+          }
+          if ((neighbours > 1) & (neighbours < 4)) {
+            let n[y*width + x] = true;
+          }
+          if (neighbours > 3) {
+            let n[y*width + x] = false;
+          }
+        } else {
+          if (neighbours = 3) {
+            let n[y*width + x] = true;
+          } else {
+            let n[y*width + x] = false;
+          }
+        }
+        let x = x + 1;
+      }
+      let y = y + 1;
+    }
+    do toggleMatrix();
+    return;
+  }
+
+  method int getNeighbours(int x, int y){
+    var int x_i, y_i, x_c, y_c, num;
+    var boolean occ;
+    let y_i = -1; let num = 0;
+    while (y_i < 2) {
+      let x_i = -1;
+      while (x_i < 2) {
+        let x_c = x + x_i; let y_c = y + y_i;
+        if ((x_c < 0) | (x_c > (width - 1)) | (y_c < 0) | (y_c > (height - 1)) | ((x_i = 0) & (y_i = 0))){
+          // nothing
+        } else {
+          let occ = get(x_c, y_c);
+          if (occ){
+            let num = num + 1;
+          }
+        }
+        let x_i = x_i + 1;
+      }
+      let y_i = y_i + 1;
+    }
+    return num;
   }
 
   method void draw(int xPos, int yPos){

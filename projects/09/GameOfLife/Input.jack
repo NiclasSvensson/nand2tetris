@@ -16,6 +16,10 @@ class Input {
     return exit;
   }
 
+  method boolean getRun() {
+    return run;
+  }
+
   method boolean getRet() {
     return ret;
   }
@@ -36,10 +40,13 @@ class Input {
       return;
     }
     let latest = c;
-    if (c = 32) {
+    if (c = 32) { // SPACE
       let ret = true;
     }
-    if (c = 140) {
+    if (c = 83) { // S
+      let run = ~run;
+    }
+    if (c = 140) { // ESC
       let exit = true;
     }
     if (c = 130) {
