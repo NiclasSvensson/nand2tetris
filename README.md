@@ -1,6 +1,6 @@
 # nand2tetris (nand2gameOfLife)
 
-Building a computer from basic pronciples. The course can be found [here](https://www.nand2tetris.org/).
+Building a computer from basic principles. The course can be found [here](https://www.nand2tetris.org/).
 
 ## Projects
 | Project number | Description | Language | Status |
