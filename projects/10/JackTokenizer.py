@@ -35,7 +35,11 @@ class JackTokenizer:
             self.string = string
             # Target file
             self.write_file = open(os.path.join(self.input_dir, self.file_names[self.file_index] + "T_my.xml"), "w")
+            self.write_file.write("<tokens>\n")
             return True
+
+    def getFileName(self):
+        return self.file_names[self.file_index]
 
     def hasMoreTokens(self):
         if len(self.string) == 0:
@@ -60,12 +64,14 @@ class JackTokenizer:
         for keyword in self.keywords:
             if self.string.startswith(keyword):
                 self.string = self.string.replace(keyword, "", 1)
+                self.writeToXML(keyword, "keyword")
                 return keyword
 
     def symbol(self):
         for symbol in self.symbols:
             if self.string.startswith(symbol):
                 self.string = self.string.replace(symbol, "", 1)
+                self.writeToXML(symbol, "symbol")
                 return symbol
 
     def identifier(self):
@@ -73,6 +79,7 @@ class JackTokenizer:
             if (char in self.symbols) or (char == " "):
                 identifier = self.string.split(char)[0]
                 self.string = self.string.replace(identifier, "", 1)
+                self.writeToXML(identifier, "identifier")
                 return identifier
 
     def intVal(self):
@@ -80,11 +87,13 @@ class JackTokenizer:
             if not char.isdigit():
                 val = self.string.split(char)[0]
                 self.string = self.string.replace(val, "", 1)
+                self.writeToXML(val, "integerConstant")
                 return val
 
     def stringVal(self):
         val = self.string.split("\"")[1]
         self.string = self.string.replace("\"" + val + "\"", "", 1)
+        self.writeToXML(val, "stringConstant")
         return val
 
     def writeToXML(self, symbol, type):
@@ -92,3 +101,7 @@ class JackTokenizer:
         symbol = "&gt;" if symbol == ">" else symbol
         symbol = "&amp;" if symbol == "&" else symbol
         self.write_file.write("<" + type + "> " + symbol + " </" + type + ">\n")
+
+    def close(self):
+        self.write_file.write("</tokens>")
+        self.write_file.close()
