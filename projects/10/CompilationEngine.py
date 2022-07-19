@@ -4,8 +4,13 @@ class CompilationEngine:
         self.index = 0
         self.file = open(file_name, "w")
         self.indent = "  "
+        self.subroutines = ["constructor", "function", "method"]
         self.types = ["int", "char", "boolean"]
         self.statements = ["let", "do", "return", "if", "while"]
+        self.terms = ["integerConstant", "stringConstant"]
+        self.operations = ["+", "-", "*", "*", "/", "&", "|", "<", ">", "="]
+        self.unary_operations = ["~", "-"]
+        self.keyword_constants = ["true", "false", "null", "this"]
 
     def compileClass(self):
         indent = 0
@@ -13,7 +18,7 @@ class CompilationEngine:
         self.advance(3, indent)
         while self.stream[self.index][0] == "static" or self.stream[self.index][0] == "field":
             self.compileClassVarDec(indent+1)
-        while self.stream[self.index][0] == "constructor" or self.stream[self.index][0] == "function" or self.stream[self.index][0] == "method":
+        while self.stream[self.index][0] in self.subroutines:
             self.compileSubroutine(indent+1)
         self.advance(1, indent)
         self.writeTag("class", True, indent)
@@ -124,22 +129,54 @@ class CompilationEngine:
 
     def compileExpression(self, indent):
         self.writeTag("expression", False, indent+1)
-        self.compileTerm(indent+1)
+        while True:
+            #self.stream[self.index+1][0] in self.operations and self.stream[self.index][0] != "(":
+            self.compileTerm(indent+1)
+            if self.stream[self.index][0] in self.operations: # and self.stream[self.index][0] != "(":
+                self.advance(1, indent+1)
+                #self.compileTerm(indent+1)
+            else:
+                break
+        #self.compileTerm(indent+1)
         self.writeTag("expression", True, indent+1)
 
     def compileTerm(self, indent):
         self.writeTag("term", False, indent+1)
-        self.advance(1, indent+1)
+        if (self.stream[self.index][1] in self.terms) or (self.stream[self.index][0] in self.keyword_constants):
+            self.advance(1, indent+1)
+        elif self.stream[self.index][1] == "identifier":
+            self.advance(1, indent+1)
+            if self.stream[self.index][0] == "[":
+                self.advance(1, indent+1)
+                self.compileExpression(indent+1)
+                self.advance(1, indent+1)
+            elif self.stream[self.index][0] == "(":
+                self.advance(1, indent+1)
+                self.compileExpressionList(indent+1)
+                self.advance(1, indent+1)
+            elif self.stream[self.index][0] == ".":
+                self.advance(3, indent+1)
+                self.compileExpressionList(indent+1)
+                self.advance(1, indent+1)
+        elif self.stream[self.index][0] in self.unary_operations:
+            self.advance(1, indent+1)
+            self.compileTerm(indent+1)
+        elif self.stream[self.index][0] == "(":
+            self.advance(1, indent+1)
+            self.compileExpression(indent+1)
+            self.advance(1, indent+1)
         self.writeTag("term", True, indent+1)
 
     def compileExpressionList(self, indent):
         self.writeTag("expressionList", False, indent+1)
-        while self.stream[self.index][0] != ")":
-            self.compileExpression(indent+1)
-            if self.stream[self.index][0] == ",":
-                self.advance(1, indent+1)
-            else:
-                break
+        if self.stream[self.index][0] != ")":
+            while True:
+                self.compileExpression(indent+1)
+                if self.stream[self.index][0] == ",":
+                    self.advance(1, indent+1)
+                else:
+                    break
+            #self.compileExpression(indent+1)
         self.writeTag("expressionList", True, indent+1)
 
     def advance(self, increment, indent):
