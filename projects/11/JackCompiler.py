@@ -20,8 +20,7 @@ def main(args):
                 input_stream.append((tokenizer.intVal(), "integerConstant"))
             elif token_type == "STRING_CONST":
                 input_stream.append((tokenizer.stringVal(), "stringConstant"))
-        compilation_engine = CompilationEngine(input_stream, os.path.join(args.jack_path, tokenizer.getFileName() + "_my.xml"))
-        #print(input_stream)
+        compilation_engine = CompilationEngine(input_stream, os.path.join(args.jack_path, tokenizer.getFileName()))
         compilation_engine.compileClass()
         tokenizer.close()
 

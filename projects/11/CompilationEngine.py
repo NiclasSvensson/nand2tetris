@@ -1,8 +1,11 @@
+from SymbolTable import SymbolTable
+from VMWriter import VMWriter
+
 class CompilationEngine:
     def __init__(self, input_stream, file_name):
         self.stream = input_stream
         self.index = 0
-        self.file = open(file_name, "w")
+        self.file = open(file_name  + "_my.xml", "w")
         self.indent = "  "
         self.subroutines = ["constructor", "function", "method"]
         self.types = ["int", "char", "boolean"]
@@ -11,6 +14,8 @@ class CompilationEngine:
         self.operations = ["+", "-", "*", "*", "/", "&", "|", "<", ">", "="]
         self.unary_operations = ["~", "-"]
         self.keyword_constants = ["true", "false", "null", "this"]
+        self.symbol_table = SymbolTable()
+        self.vm_writer = VMWriter(file_name  + ".vm")
 
     def compileClass(self):
         indent = 0
@@ -25,13 +30,17 @@ class CompilationEngine:
 
     def compileClassVarDec(self, indent):
         self.writeTag("classVarDec", False, indent)
+        kind = self.stream[self.index][0]
+        type = self.stream[self.index+1][0]
         self.advance(2, indent)
         while self.stream[self.index][1] == "identifier":
+            self.symbol_table.define(self.stream[self.index][0], type, kind)
             self.advance(2, indent)
         self.writeTag("classVarDec", True, indent)
 
     def compileSubroutine(self, indent):
         self.writeTag("subroutineDec", False, indent)
+        self.symbol_table.startSubroutine()
         self.advance(4, indent)
         self.compileParameterList(indent+1)
         self.advance(1, indent)
@@ -41,12 +50,14 @@ class CompilationEngine:
             self.compileVarDec(indent+1)
         self.compileStatements(indent+1)
         self.advance(1, indent+1)
+        #print(self.symbol_table)
         self.writeTag("subroutineBody", True, indent+1)
         self.writeTag("subroutineDec", True, indent)
 
     def compileParameterList(self, indent):
         self.writeTag("parameterList", False, indent)
         while self.stream[self.index][0] in self.types or self.stream[self.index][1] == "identifier":
+            self.symbol_table.define(self.stream[self.index + 1][0], self.stream[self.index][0], "arg")
             self.advance(2, indent)
             if self.stream[self.index][0] == ",":
                 self.advance(1, indent)
@@ -54,8 +65,11 @@ class CompilationEngine:
 
     def compileVarDec(self, indent):
         self.writeTag("varDec", False, indent+1)
+        kind = self.stream[self.index][0]
+        type = self.stream[self.index+1][0]
         self.advance(2, indent+1)
         while self.stream[self.index][1] == "identifier":
+            self.symbol_table.define(self.stream[self.index][0], type, kind)
             self.advance(2, indent+1)
         self.writeTag("varDec", True, indent+1)
 
@@ -95,7 +109,6 @@ class CompilationEngine:
         self.compileExpression(indent+1)
         self.advance(1, indent+1)
         self.writeTag("letStatement", True, indent+1)
-        #print(self.stream[self.index][0])
 
     def compileWhile(self, indent):
         self.writeTag("whileStatement", False, indent+1)
@@ -130,14 +143,11 @@ class CompilationEngine:
     def compileExpression(self, indent):
         self.writeTag("expression", False, indent+1)
         while True:
-            #self.stream[self.index+1][0] in self.operations and self.stream[self.index][0] != "(":
             self.compileTerm(indent+1)
-            if self.stream[self.index][0] in self.operations: # and self.stream[self.index][0] != "(":
+            if self.stream[self.index][0] in self.operations:
                 self.advance(1, indent+1)
-                #self.compileTerm(indent+1)
             else:
                 break
-        #self.compileTerm(indent+1)
         self.writeTag("expression", True, indent+1)
 
     def compileTerm(self, indent):
@@ -176,7 +186,6 @@ class CompilationEngine:
                     self.advance(1, indent+1)
                 else:
                     break
-            #self.compileExpression(indent+1)
         self.writeTag("expressionList", True, indent+1)
 
     def advance(self, increment, indent):
