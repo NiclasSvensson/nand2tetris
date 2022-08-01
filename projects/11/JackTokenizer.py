@@ -3,9 +3,9 @@ import re
 
 class JackTokenizer:
     def __init__(self, input_dir):
-        self.keywords = ("class", "constructor", "function", "method", "field", "static", "var",
-                         "int", "char", "boolean", "void", "true", "false", "null", "this", "let",
-                         "do", "if", "else", "while", "return")
+        self.keywords = ("class ", "constructor ", "function ", "method ", "field ", "static ", "var ",
+                         "int ", "char ", "boolean ", "void ", "true", "false", "null", "this", "let",
+                         "do ", "if", "else", "while", "return")
         self.symbols = ("{", "}", "(", ")", "[", "]", ".", ",", ";", "+", "-", "*", "*", "/", "&",
                         "|", "<", ">", "=", "~")
         self.input_dir = input_dir

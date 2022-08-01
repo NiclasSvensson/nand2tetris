@@ -15,11 +15,12 @@ class CompilationEngine:
         self.unary_operations = ["~", "-"]
         self.keyword_constants = ["true", "false", "null", "this"]
         self.symbol_table = SymbolTable()
-        self.vm_writer = VMWriter(file_name  + ".vm")
+        self.vm_writer = VMWriter(file_name  + "_my.vm")
 
     def compileClass(self):
         indent = 0
         self.writeTag("class", False, indent)
+        self.class_name = self.stream[self.index+1][0]
         self.advance(3, indent)
         while self.stream[self.index][0] == "static" or self.stream[self.index][0] == "field":
             self.compileClassVarDec(indent+1)
@@ -41,6 +42,8 @@ class CompilationEngine:
     def compileSubroutine(self, indent):
         self.writeTag("subroutineDec", False, indent)
         self.symbol_table.startSubroutine()
+        self.return_type = self.stream[self.index+1][0]
+        function_name = self.stream[self.index+2][0]
         self.advance(4, indent)
         self.compileParameterList(indent+1)
         self.advance(1, indent)
@@ -48,6 +51,7 @@ class CompilationEngine:
         self.advance(1, indent+1)
         while self.stream[self.index][0] == "var":
             self.compileVarDec(indent+1)
+        self.vm_writer.writeFunction(self.class_name + "." + function_name, self.symbol_table.varCount("var"))
         self.compileStatements(indent+1)
         self.advance(1, indent+1)
         #print(self.symbol_table)
@@ -91,10 +95,15 @@ class CompilationEngine:
     def compileDo(self, indent):
         self.writeTag("doStatement", False, indent+1)
         if self.stream[self.index+2][0] == ".":
+            name = self.stream[self.index+1][0]+"."+self.stream[self.index+3][0]
             self.advance(5, indent+1)
         else:
+            name = self.class_name+"."+self.stream[self.index+1][0]
             self.advance(3, indent+1)
-        self.compileExpressionList(indent+1);
+        args = self.compileExpressionList(indent+1);
+        self.vm_writer.writeCall(name, args)
+        if self.return_type == "void":
+            self.vm_writer.writePop("temp", 0)
         self.advance(2, indent+1)
         self.writeTag("doStatement", True, indent+1)
 
@@ -125,6 +134,9 @@ class CompilationEngine:
         if self.stream[self.index][0] != ";":
             self.compileExpression(indent+1)
         self.advance(1, indent+1)
+        if self.return_type == "void":
+            self.vm_writer.writePush("constant", 0)
+        self.vm_writer.writeReturn()
         self.writeTag("returnStatement", True, indent+1)
 
     def compileIf(self, indent):
@@ -142,17 +154,25 @@ class CompilationEngine:
 
     def compileExpression(self, indent):
         self.writeTag("expression", False, indent+1)
+        cnt = 0
+        op = None
         while True:
             self.compileTerm(indent+1)
+            if op is not None:
+                self.vm_writer.writeArithmetic(op)
             if self.stream[self.index][0] in self.operations:
+                op = self.stream[self.index][0]
                 self.advance(1, indent+1)
             else:
                 break
+            cnt += 1
         self.writeTag("expression", True, indent+1)
 
     def compileTerm(self, indent):
         self.writeTag("term", False, indent+1)
         if (self.stream[self.index][1] in self.terms) or (self.stream[self.index][0] in self.keyword_constants):
+            if self.stream[self.index][1] == "integerConstant":
+                self.vm_writer.writePush("constant", self.stream[self.index][0])
             self.advance(1, indent+1)
         elif self.stream[self.index][1] == "identifier":
             self.advance(1, indent+1)
@@ -169,8 +189,10 @@ class CompilationEngine:
                 self.compileExpressionList(indent+1)
                 self.advance(1, indent+1)
         elif self.stream[self.index][0] in self.unary_operations:
+            op = self.stream[self.index][0]
             self.advance(1, indent+1)
             self.compileTerm(indent+1)
+            self.writeArithmetic(op)
         elif self.stream[self.index][0] == "(":
             self.advance(1, indent+1)
             self.compileExpression(indent+1)
@@ -179,14 +201,18 @@ class CompilationEngine:
 
     def compileExpressionList(self, indent):
         self.writeTag("expressionList", False, indent+1)
+        cnt = 0
         if self.stream[self.index][0] != ")":
+            cnt += 1
             while True:
                 self.compileExpression(indent+1)
                 if self.stream[self.index][0] == ",":
+                    cnt += 1
                     self.advance(1, indent+1)
                 else:
                     break
         self.writeTag("expressionList", True, indent+1)
+        return cnt
 
     def advance(self, increment, indent):
         for i in range(increment):

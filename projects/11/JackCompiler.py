@@ -11,7 +11,7 @@ def main(args):
         while tokenizer.hasMoreTokens():
             token_type = tokenizer.tokenType()
             if token_type == "KEYWORD":
-                input_stream.append((tokenizer.keyWord(), "keyword"))
+                input_stream.append((tokenizer.keyWord().strip(), "keyword"))
             elif token_type == "SYMBOL":
                 input_stream.append((tokenizer.symbol(), "symbol"))
             elif token_type == "IDENTIFIER":
