@@ -15,5 +15,5 @@ Building a computer from basic principles. The course can be found [here](https:
 | 08 | Virtual Machine II: Program Control| Python | Done |
 | 09 | High Level Language| Jack | Done |
 | 10 | Compiler I: Syntax Analysis| Python | Done |
-| 11 | Compiler II: Code generation| Python | Ongoing |
+| 11 | Compiler II: Code generation| Python | Done |
 | 12 | Operating System| Jack | Not started |
