@@ -16,6 +16,8 @@ class CompilationEngine:
         self.keyword_constants = ["true", "false", "null", "this"]
         self.symbol_table = SymbolTable()
         self.vm_writer = VMWriter(file_name  + "_my.vm")
+        self.whiles = 0
+        self.ifs = 0
 
     def compileClass(self):
         indent = 0
@@ -51,7 +53,7 @@ class CompilationEngine:
         self.advance(1, indent+1)
         while self.stream[self.index][0] == "var":
             self.compileVarDec(indent+1)
-        self.vm_writer.writeFunction(self.class_name + "." + function_name, self.symbol_table.varCount("var"))
+        self.vm_writer.writeFunction(self.class_name + "." + function_name, self.symbol_table.varCount("local"))
         self.compileStatements(indent+1)
         self.advance(1, indent+1)
         #print(self.symbol_table)
@@ -61,7 +63,7 @@ class CompilationEngine:
     def compileParameterList(self, indent):
         self.writeTag("parameterList", False, indent)
         while self.stream[self.index][0] in self.types or self.stream[self.index][1] == "identifier":
-            self.symbol_table.define(self.stream[self.index + 1][0], self.stream[self.index][0], "arg")
+            self.symbol_table.define(self.stream[self.index + 1][0], self.stream[self.index][0], "argument")
             self.advance(2, indent)
             if self.stream[self.index][0] == ",":
                 self.advance(1, indent)
@@ -73,7 +75,7 @@ class CompilationEngine:
         type = self.stream[self.index+1][0]
         self.advance(2, indent+1)
         while self.stream[self.index][1] == "identifier":
-            self.symbol_table.define(self.stream[self.index][0], type, kind)
+            self.symbol_table.define(self.stream[self.index][0], type, "local")
             self.advance(2, indent+1)
         self.writeTag("varDec", True, indent+1)
 
@@ -109,6 +111,7 @@ class CompilationEngine:
 
     def compileLet(self, indent):
         self.writeTag("letStatement", False, indent+1)
+        var = self.stream[self.index+1][0]
         self.advance(2, indent+1)
         if self.stream[self.index][0] == "[":
             self.advance(1, indent+1)
@@ -116,16 +119,24 @@ class CompilationEngine:
             self.advance(1, indent+1)
         self.advance(1, indent+1)
         self.compileExpression(indent+1)
+        self.vm_writer.writePop(self.symbol_table.kindOf(var), self.symbol_table.indexOf(var))
         self.advance(1, indent+1)
         self.writeTag("letStatement", True, indent+1)
 
     def compileWhile(self, indent):
+        num = self.whiles
+        self.whiles += 1
         self.writeTag("whileStatement", False, indent+1)
+        self.vm_writer.writeLabel("WHILE_EXP" + str(num))
         self.advance(2, indent+1)
         self.compileExpression(indent+1)
+        self.vm_writer.writeArithmetic("~")
+        self.vm_writer.writeIf("WHILE_END" + str(num))
         self.advance(2, indent+1)
         self.compileStatements(indent+1)
         self.advance(1, indent+1)
+        self.vm_writer.writeGoto("WHILE_EXP" + str(num))
+        self.vm_writer.writeLabel("WHILE_END" + str(num))
         self.writeTag("whileStatement", True, indent+1)
 
     def compileReturn(self, indent):
@@ -140,16 +151,24 @@ class CompilationEngine:
         self.writeTag("returnStatement", True, indent+1)
 
     def compileIf(self, indent):
+        num = self.ifs
+        self.ifs += 1
         self.writeTag("ifStatement", False, indent+1)
         self.advance(2, indent+1)
         self.compileExpression(indent+1)
+        self.vm_writer.writeIf("IF_TRUE" + str(num))
+        self.vm_writer.writeGoto("IF_FALSE" + str(num))
+        self.vm_writer.writeLabel("IF_TRUE" + str(num))
         self.advance(2, indent+1)
         self.compileStatements(indent+1)
         self.advance(1, indent+1)
+        self.vm_writer.writeGoto("IF_END" + str(num))
+        self.vm_writer.writeLabel("IF_FALSE" + str(num))
         if self.stream[self.index][0] == "else":
             self.advance(2, indent+1)
             self.compileStatements(indent+1)
             self.advance(1, indent+1)
+        self.vm_writer.writeLabel("IF_END" + str(num))
         self.writeTag("ifStatement", True, indent+1)
 
     def compileExpression(self, indent):
@@ -173,8 +192,20 @@ class CompilationEngine:
         if (self.stream[self.index][1] in self.terms) or (self.stream[self.index][0] in self.keyword_constants):
             if self.stream[self.index][1] == "integerConstant":
                 self.vm_writer.writePush("constant", self.stream[self.index][0])
+            elif self.stream[self.index][1] == "stringConstant":
+                self.vm_writer.pushString(self.stream[self.index][0])
+            elif self.stream[self.index][0] in self.keyword_constants:
+                kwc = self.stream[self.index][0]
+                if kwc == "true":
+                    self.vm_writer.writePush("constant" , 0)
+                    self.vm_writer.writeArithmetic("~")
+                if kwc == "false":
+                    self.vm_writer.writePush("constant" , 0)
+                if kwc == "null":
+                    self.vm_writer.writePush("constant" , 0)
             self.advance(1, indent+1)
         elif self.stream[self.index][1] == "identifier":
+            id = self.stream[self.index][0]
             self.advance(1, indent+1)
             if self.stream[self.index][0] == "[":
                 self.advance(1, indent+1)
@@ -182,17 +213,22 @@ class CompilationEngine:
                 self.advance(1, indent+1)
             elif self.stream[self.index][0] == "(":
                 self.advance(1, indent+1)
-                self.compileExpressionList(indent+1)
+                args = self.compileExpressionList(indent+1)
+                self.vm_writer.writeCall(self.class_name+"."+id, args)
                 self.advance(1, indent+1)
             elif self.stream[self.index][0] == ".":
+                method = self.stream[self.index+1][0]
                 self.advance(3, indent+1)
-                self.compileExpressionList(indent+1)
+                args = self.compileExpressionList(indent+1)
+                self.vm_writer.writeCall(id+"."+method, args)
                 self.advance(1, indent+1)
+            else:
+                self.vm_writer.writePush(self.symbol_table.kindOf(id), self.symbol_table.indexOf(id))
         elif self.stream[self.index][0] in self.unary_operations:
             op = self.stream[self.index][0]
             self.advance(1, indent+1)
             self.compileTerm(indent+1)
-            self.writeArithmetic(op)
+            self.vm_writer.writeArithmetic(op, True)
         elif self.stream[self.index][0] == "(":
             self.advance(1, indent+1)
             self.compileExpression(indent+1)

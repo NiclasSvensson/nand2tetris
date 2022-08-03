@@ -9,13 +9,13 @@ class VMWriter:
     def writePop(self, segment, index):
         self.file.write("pop " + segment + " " + str(index) + "\n")
 
-    def writeArithmetic(self, command):
+    def writeArithmetic(self, command, unary=False):
         if command == "+":
             self.file.write("add\n")
+        elif command == "-" and unary:
+            self.file.write("neg\n")
         elif command == "-":
             self.file.write("sub\n")
-        elif command == "-":
-            self.file.write("neg\n")
         elif command == "=":
             self.file.write("eq\n")
         elif command == "<":
@@ -30,6 +30,8 @@ class VMWriter:
             self.file.write("not\n")
         elif command == "*":
             self.file.write("call Math.multiply 2\n")
+        elif command == "/":
+            self.file.write("call Math.divide 2\n")
 
     def writeLabel(self, label):
         self.file.write("label " + label + "\n")
@@ -48,6 +50,11 @@ class VMWriter:
 
     def writeReturn(self):
         self.file.write("return\n")
+
+    def pushString(self, string):
+        for char in string:
+            self.writePush("constant", ord(char))
+            self.writeCall("String.appendChar", 2)
 
     def close(self):
         self.file.close()

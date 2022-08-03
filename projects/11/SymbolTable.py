@@ -11,6 +11,8 @@ class SymbolTable:
         return str(self.class_table) + "\n" + str(self.subroutine_table)
 
     def startSubroutine(self):
+        self.arg_i = 0
+        self.var_i = 0
         self.subroutine_table = {}
 
     def define(self, name, type, kind):
@@ -20,10 +22,10 @@ class SymbolTable:
         elif kind == "field":
             self.class_table[name] = [type, kind, self.varCount(kind)]
             self.field_i += 1
-        elif kind == "arg":
+        elif kind == "argument":
             self.subroutine_table[name] = [type, kind, self.varCount(kind)]
             self.arg_i += 1
-        elif kind == "var":
+        elif kind == "local":
             self.subroutine_table[name] = [type, kind, self.varCount(kind)]
             self.var_i += 1
 
@@ -32,9 +34,9 @@ class SymbolTable:
             return self.static_i
         elif kind == "field":
             return self.field_i
-        elif kind == "arg":
+        elif kind == "argument":
             return self.arg_i
-        elif kind == "var":
+        elif kind == "local":
             return self.var_i
 
     def typeOf(self, name):
