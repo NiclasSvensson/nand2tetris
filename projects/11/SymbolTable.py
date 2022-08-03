@@ -2,16 +2,19 @@ class SymbolTable:
     def __init__(self):
         self.static_i = 0
         self.field_i = 0
-        self.arg_i = 0
         self.var_i = 0
+        self.arg_i = 0
 
         self.class_table = {}
 
     def __str__(self):
         return str(self.class_table) + "\n" + str(self.subroutine_table)
 
-    def startSubroutine(self):
-        self.arg_i = 0
+    def startSubroutine(self, type):
+        if type == "method":
+            self.arg_i = 1
+        else:
+            self.arg_i = 0
         self.var_i = 0
         self.subroutine_table = {}
 

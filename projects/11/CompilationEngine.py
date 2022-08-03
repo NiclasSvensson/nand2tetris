@@ -30,6 +30,7 @@ class CompilationEngine:
             self.compileSubroutine(indent+1)
         self.advance(1, indent)
         self.writeTag("class", True, indent)
+        print(self.symbol_table)
 
     def compileClassVarDec(self, indent):
         self.writeTag("classVarDec", False, indent)
@@ -43,8 +44,8 @@ class CompilationEngine:
 
     def compileSubroutine(self, indent):
         self.writeTag("subroutineDec", False, indent)
-        self.symbol_table.startSubroutine()
         self.subroutine_type = self.stream[self.index][0]
+        self.symbol_table.startSubroutine(self.subroutine_type)
         self.return_type = self.stream[self.index+1][0]
         function_name = self.stream[self.index+2][0]
         self.advance(4, indent)
@@ -105,7 +106,6 @@ class CompilationEngine:
         args = 0
         self.writeTag("doStatement", False, indent+1)
         type = self.stream[self.index+1][0]
-        #print(type)
         method = True if type in self.symbol_table else False
         if self.stream[self.index+2][0] == ".":
             if method:
@@ -122,8 +122,9 @@ class CompilationEngine:
             self.advance(3, indent+1)
         args += self.compileExpressionList(indent+1);
         self.vm_writer.writeCall(name, args)
-        if self.return_type == "void":
-            self.vm_writer.writePop("temp", 0)
+        #if self.return_type == "void":
+        #    self.vm_writer.writePop("temp", 0)
+        self.vm_writer.writePop("temp", 0)
         self.advance(2, indent+1)
         self.writeTag("doStatement", True, indent+1)
 
@@ -131,13 +132,22 @@ class CompilationEngine:
         self.writeTag("letStatement", False, indent+1)
         var = self.stream[self.index+1][0]
         self.advance(2, indent+1)
-        if self.stream[self.index][0] == "[":
+        indexing = True if self.stream[self.index][0] == "[" else False
+        if indexing:
             self.advance(1, indent+1)
             self.compileExpression(indent+1)
+            self.vm_writer.writePush(self.symbol_table.kindOf(var), self.symbol_table.indexOf(var))
+            self.vm_writer.writeArithmetic("+")
             self.advance(1, indent+1)
         self.advance(1, indent+1)
         self.compileExpression(indent+1)
-        self.vm_writer.writePop(self.symbol_table.kindOf(var), self.symbol_table.indexOf(var))
+        if indexing:
+            self.vm_writer.writePop("temp", 0)
+            self.vm_writer.writePop("pointer", 1)
+            self.vm_writer.writePush("temp", 0)
+            self.vm_writer.writePop("that", 0)
+        else:
+            self.vm_writer.writePop(self.symbol_table.kindOf(var), self.symbol_table.indexOf(var))
         self.advance(1, indent+1)
         self.writeTag("letStatement", True, indent+1)
 
@@ -213,7 +223,10 @@ class CompilationEngine:
             if self.stream[self.index][1] == "integerConstant":
                 self.vm_writer.writePush("constant", self.stream[self.index][0])
             elif self.stream[self.index][1] == "stringConstant":
-                self.vm_writer.pushString(self.stream[self.index][0])
+                string = self.stream[self.index][0]
+                self.vm_writer.writePush("constant", len(string))
+                self.vm_writer.writeCall("String.new", 1)
+                self.vm_writer.pushString(string)
             elif self.stream[self.index][0] in self.keyword_constants:
                 kwc = self.stream[self.index][0]
                 if kwc == "true":
@@ -228,22 +241,34 @@ class CompilationEngine:
             self.advance(1, indent+1)
         elif self.stream[self.index][1] == "identifier":
             id = self.stream[self.index][0]
-            #method = True if id in self.symbol_table else False
+            type = self.stream[self.index+1][0]
+            method = True if id in self.symbol_table else False
             self.advance(1, indent+1)
             if self.stream[self.index][0] == "[":
                 self.advance(1, indent+1)
                 self.compileExpression(indent+1)
+                self.vm_writer.writePush(self.symbol_table.kindOf(id), self.symbol_table.indexOf(id))
+                self.vm_writer.writeArithmetic("+")
+                self.vm_writer.writePop("pointer", 1)
+                self.vm_writer.writePush("that", 0)
                 self.advance(1, indent+1)
             elif self.stream[self.index][0] == "(":
                 self.advance(1, indent+1)
-                args = self.compileExpressionList(indent+1)
+                args = self.compileExpressionList(indent+1) + 1
+                self.vm_writer.writePush("pointer", 0)
+                self.vm_writer.writePush(self.symbol_table.kindOf(id), self.symbol_table.indexOf(id))
                 self.vm_writer.writeCall(self.class_name+"."+id, args)
                 self.advance(1, indent+1)
             elif self.stream[self.index][0] == ".":
                 subroutine = self.stream[self.index+1][0]
                 self.advance(3, indent+1)
                 args = self.compileExpressionList(indent+1)
-                self.vm_writer.writeCall(id+"."+subroutine, args)
+                if method:
+                    args += 1
+                    self.vm_writer.writePush(self.symbol_table.kindOf(id), self.symbol_table.indexOf(id))
+                    self.vm_writer.writeCall(self.symbol_table.typeOf(id)+"."+subroutine, args)
+                else:
+                    self.vm_writer.writeCall(id+"."+subroutine, args)
                 self.advance(1, indent+1)
             else:
                 self.vm_writer.writePush(self.symbol_table.kindOf(id), self.symbol_table.indexOf(id))
