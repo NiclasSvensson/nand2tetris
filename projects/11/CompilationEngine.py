@@ -44,6 +44,7 @@ class CompilationEngine:
     def compileSubroutine(self, indent):
         self.writeTag("subroutineDec", False, indent)
         self.symbol_table.startSubroutine()
+        self.subroutine_type = self.stream[self.index][0]
         self.return_type = self.stream[self.index+1][0]
         function_name = self.stream[self.index+2][0]
         self.advance(4, indent)
@@ -54,9 +55,15 @@ class CompilationEngine:
         while self.stream[self.index][0] == "var":
             self.compileVarDec(indent+1)
         self.vm_writer.writeFunction(self.class_name + "." + function_name, self.symbol_table.varCount("local"))
+        if self.subroutine_type == "constructor":
+            self.vm_writer.writePush("constant", self.symbol_table.getNumFields())
+            self.vm_writer.writeCall("Memory.alloc", 1)
+            self.vm_writer.writePop("pointer", 0)
+        if self.subroutine_type == "method":
+            self.vm_writer.writePush("argument", 0)
+            self.vm_writer.writePop("pointer", 0)
         self.compileStatements(indent+1)
         self.advance(1, indent+1)
-        #print(self.symbol_table)
         self.writeTag("subroutineBody", True, indent+1)
         self.writeTag("subroutineDec", True, indent)
 
@@ -95,14 +102,25 @@ class CompilationEngine:
         self.writeTag("statements", True, indent+1)
 
     def compileDo(self, indent):
+        args = 0
         self.writeTag("doStatement", False, indent+1)
+        type = self.stream[self.index+1][0]
+        #print(type)
+        method = True if type in self.symbol_table else False
         if self.stream[self.index+2][0] == ".":
-            name = self.stream[self.index+1][0]+"."+self.stream[self.index+3][0]
+            if method:
+                self.vm_writer.writePush(self.symbol_table.kindOf(type), self.symbol_table.indexOf(type))
+                name = self.symbol_table.typeOf(type)+"."+self.stream[self.index+3][0]
+                args += 1
+            else:
+                name = type+"."+self.stream[self.index+3][0]
             self.advance(5, indent+1)
         else:
+            args += 1
+            self.vm_writer.writePush("pointer", 0)
             name = self.class_name+"."+self.stream[self.index+1][0]
             self.advance(3, indent+1)
-        args = self.compileExpressionList(indent+1);
+        args += self.compileExpressionList(indent+1);
         self.vm_writer.writeCall(name, args)
         if self.return_type == "void":
             self.vm_writer.writePop("temp", 0)
@@ -162,13 +180,15 @@ class CompilationEngine:
         self.advance(2, indent+1)
         self.compileStatements(indent+1)
         self.advance(1, indent+1)
-        self.vm_writer.writeGoto("IF_END" + str(num))
-        self.vm_writer.writeLabel("IF_FALSE" + str(num))
         if self.stream[self.index][0] == "else":
+            self.vm_writer.writeGoto("IF_END" + str(num))
+            self.vm_writer.writeLabel("IF_FALSE" + str(num))
             self.advance(2, indent+1)
             self.compileStatements(indent+1)
             self.advance(1, indent+1)
-        self.vm_writer.writeLabel("IF_END" + str(num))
+            self.vm_writer.writeLabel("IF_END" + str(num))
+        else:
+            self.vm_writer.writeLabel("IF_FALSE" + str(num))
         self.writeTag("ifStatement", True, indent+1)
 
     def compileExpression(self, indent):
@@ -203,9 +223,12 @@ class CompilationEngine:
                     self.vm_writer.writePush("constant" , 0)
                 if kwc == "null":
                     self.vm_writer.writePush("constant" , 0)
+                if kwc == "this":
+                    self.vm_writer.writePush("pointer" , 0)
             self.advance(1, indent+1)
         elif self.stream[self.index][1] == "identifier":
             id = self.stream[self.index][0]
+            #method = True if id in self.symbol_table else False
             self.advance(1, indent+1)
             if self.stream[self.index][0] == "[":
                 self.advance(1, indent+1)
@@ -217,10 +240,10 @@ class CompilationEngine:
                 self.vm_writer.writeCall(self.class_name+"."+id, args)
                 self.advance(1, indent+1)
             elif self.stream[self.index][0] == ".":
-                method = self.stream[self.index+1][0]
+                subroutine = self.stream[self.index+1][0]
                 self.advance(3, indent+1)
                 args = self.compileExpressionList(indent+1)
-                self.vm_writer.writeCall(id+"."+method, args)
+                self.vm_writer.writeCall(id+"."+subroutine, args)
                 self.advance(1, indent+1)
             else:
                 self.vm_writer.writePush(self.symbol_table.kindOf(id), self.symbol_table.indexOf(id))
