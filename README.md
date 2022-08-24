@@ -16,4 +16,4 @@ Building a computer from basic principles. The course can be found [here](https:
 | 09 | High Level Language| Jack | Done |
 | 10 | Compiler I: Syntax Analysis| Python | Done |
 | 11 | Compiler II: Code generation| Python | Done |
-| 12 | Operating System| Jack | Not started |
+| 12 | Operating System| Jack | Ongoing |
